@@ -37,7 +37,7 @@ export const appendRow = async (values: string[]): Promise<void> => {
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${sheetName}!A:C`,
+    range: `${sheetName}!A:D`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [values],

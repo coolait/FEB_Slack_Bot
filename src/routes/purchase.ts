@@ -5,7 +5,7 @@ import { SlackSlashCommandBody, slackEphemeral, verifySlackSignature } from '../
 const router = Router();
 
 const validationError = slackEphemeral(
-  'Error: please provide exactly 3 comma-separated values like:\n  /purchase item, category, amount'
+  'Error: please provide exactly 3 comma-separated values like:\n  /purchase Subteam, Reason, $Amount'
 );
 
 const parseText = (text?: string): string[] | null => {
@@ -15,25 +15,42 @@ const parseText = (text?: string): string[] | null => {
   return parts;
 };
 
+/** Current date as MM/DD/YYYY for the sheet. */
+const formatSheetDate = (): string => {
+  const d = new Date();
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const year = d.getFullYear();
+  return `${month}/${day}/${year}`;
+};
+
 router.post('/', verifySlackSignature, async (req: Request, res: Response) => {
   const body = req.body as SlackSlashCommandBody;
 
-  const values = parseText(body.text);
-  if (!values) {
+  const parsed = parseText(body.text);
+  if (!parsed) {
     console.warn('[validation] Invalid input:', body.text);
     return res.status(200).json(validationError);
   }
 
-  try {
-    console.log('[sheets] Appending row:', values);
-    await appendRow(values);
-    return res.status(200).json(slackEphemeral('Purchase logged successfully.'));
-  } catch (err) {
-    console.error('[error] Failed to append to sheet', err);
-    return res
-      .status(200)
-      .json(slackEphemeral('Could not log purchase right now; try again later.'));
-  }
+  // Row format: Date, Subteam, Reason, $Amount
+  const [subteam, reason, amount] = parsed;
+  const row = [formatSheetDate(), subteam, reason, amount];
+
+  // Respond to Slack immediately to avoid slash command timeouts on cold starts.
+  res
+    .status(200)
+    .json(slackEphemeral('Purchase received; logging it to the sheet now.'));
+
+  // Perform the Google Sheets write asynchronously in the background.
+  (async () => {
+    try {
+      console.log('[sheets] Appending row:', row);
+      await appendRow(row);
+    } catch (err) {
+      console.error('[error] Failed to append to sheet', err);
+    }
+  })();
 });
 
 export default router;
