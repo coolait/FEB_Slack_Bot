@@ -104,7 +104,66 @@ Expected response JSON: `{"response_type":"ephemeral","text":"Purchase logged su
 
 You need to host your server on the internet so Slack can send POST requests to it. Here are detailed steps for popular hosting platforms:
 
-### Option 1: Render (Recommended - Free tier available)
+### Option 1: OCF (UC Berkeley – free for student groups)
+
+App hosting runs on **apphost.ocf.berkeley.edu** and uses a **Unix socket**; the app is supervised with systemd. You need an OCF group account and app hosting enabled (email `hostmaster@ocf.berkeley.edu` if needed).
+
+1. **SSH to the app server** (not the general login server):
+   ```bash
+   ssh apphost.ocf.berkeley.edu
+   ```
+
+2. **Install Node via nvm** (if not already):
+   ```bash
+   mkdir -p ~/myapp
+   cd ~/myapp
+   # Install nvm (see https://github.com/nvm-sh/nvm), then:
+   nvm install 18
+   nvm alias default 18
+   ```
+
+3. **Deploy your code** into `~/myapp` (e.g. clone repo or rsync):
+   ```bash
+   cd ~/myapp
+   git clone https://github.com/YOUR_ORG/FEB_Slack_Bot.git .
+   # or rsync from your machine
+   npm install
+   npm run build
+   ```
+
+4. **Environment variables**  
+   Create `~/myapp/.env` with the same variables as local (see Environment variables above). Do **not** set `PORT`—the run script sets it to the Unix socket.
+
+5. **Run script**  
+   Copy the OCF run script and make it executable:
+   ```bash
+   cp scripts/ocf-run ~/myapp/run
+   chmod +x ~/myapp/run
+   ```
+   Test it: run `~/myapp/run` in the terminal; your site should be reachable at your OCF vhost. Stop with Ctrl+C when done testing.
+
+6. **Supervise with systemd**  
+   Copy the service file and edit placeholders:
+   ```bash
+   mkdir -p ~/.config/systemd/user
+   cp scripts/ocf-myapp.service ~/.config/systemd/user/myapp.service
+   nano ~/.config/systemd/user/myapp.service
+   ```
+   Replace `{YOUR GROUP NAME}`, `{U}` (first letter of username), `{UU}` (first two letters), `{USERNAME}` (full username). Then:
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user enable myapp
+   systemctl --user start myapp
+   systemctl --user status myapp
+   ```
+
+7. **Update Slack**  
+   Set your slash command Request URL to: `https://your-group.studentorg.berkeley.edu/api/purchase` (or your OCF vhost + `/api/purchase`).
+
+8. **Logs**  
+   `journalctl --user -u myapp -f` to follow logs; `journalctl --user -u myapp -n 100` for the last 100 lines.
+
+### Option 2: Render (Free tier available)
 
 1. **Create a Render account**
    - Go to https://render.com and sign up (GitHub login works).
@@ -145,7 +204,7 @@ You need to host your server on the internet so Slack can send POST requests to 
    - In Slack app settings → **Slash Commands** → Edit `/purchase` → Update **Request URL** to your Render URL.
    - Save.
 
-### Option 2: Railway
+### Option 3: Railway
 
 1. **Create a Railway account**
    - Go to https://railway.app and sign up (GitHub login works).
@@ -173,7 +232,7 @@ You need to host your server on the internet so Slack can send POST requests to 
    - Copy your Railway URL: `https://your-app.up.railway.app/api/purchase`
    - Update the Slack slash command Request URL.
 
-### Option 3: Heroku
+### Option 4: Heroku
 
 1. **Install Heroku CLI** (https://devcenter.heroku.com/articles/heroku-cli)
 
@@ -203,7 +262,7 @@ You need to host your server on the internet so Slack can send POST requests to 
    - Your app URL: `https://your-app-name.herokuapp.com`
    - Update Slack command URL to: `https://your-app-name.herokuapp.com/api/purchase`
 
-### Option 4: Fly.io
+### Option 5: Fly.io
 
 1. **Install Fly CLI** (https://fly.io/docs/getting-started/installing-flyctl/)
 

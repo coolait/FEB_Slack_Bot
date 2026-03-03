@@ -1,0 +1,16 @@
+# systemd user service for Slack Purchase Logger on OCF
+# Save to: ~/.config/systemd/user/myapp.service
+# Replace {U} = first letter of username, {UU} = first two letters, {USERNAME} = full username
+# Replace {YOUR GROUP NAME} with your group name.
+# Then: systemctl --user daemon-reload && systemctl --user enable myapp && systemctl --user start myapp
+
+[Unit]
+Description={YOUR GROUP NAME} Slack Purchase Logger
+ConditionHost=vampires
+
+[Install]
+WantedBy=default.target
+
+[Service]
+ExecStart=/home/{U}/{UU}/{USERNAME}/myapp/run
+Restart=always

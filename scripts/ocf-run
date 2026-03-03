@@ -1,0 +1,14 @@
+#!/bin/bash -e
+# Copy this file to ~/myapp/run on OCF and run: chmod +x ~/myapp/run
+# See README "Deploy: OCF" for full steps.
+
+USER="$(whoami)"
+[ -e "/srv/apps/$USER/$USER.sock" ] && rm "/srv/apps/$USER/$USER.sock"
+umask 0
+
+. ~/.nvm/nvm.sh
+export NODE_ENV=production
+export PORT="/srv/apps/$USER/$USER.sock"
+
+cd ~/myapp
+exec node dist/index.js

@@ -23,8 +23,18 @@ app.get('/', (_req, res) => {
 
 app.use('/api/purchase', purchaseRouter);
 
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-app.listen(port, () => {
-  console.log(`[startup] Listening on port ${port}`);
-});
+// OCF uses a Unix socket path in PORT; elsewhere use a numeric port.
+const portOrSocket = process.env.PORT;
+const isSocket = typeof portOrSocket === 'string' && (portOrSocket.endsWith('.sock') || portOrSocket.startsWith('/'));
+
+if (isSocket && portOrSocket) {
+  app.listen(portOrSocket, () => {
+    console.log(`[startup] Listening on socket ${portOrSocket}`);
+  });
+} else {
+  const port = portOrSocket ? Number(portOrSocket) : 3000;
+  app.listen(port, () => {
+    console.log(`[startup] Listening on port ${port}`);
+  });
+}
 
