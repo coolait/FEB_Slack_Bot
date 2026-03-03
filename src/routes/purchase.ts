@@ -33,9 +33,10 @@ router.post('/', verifySlackSignature, async (req: Request, res: Response) => {
     return res.status(200).json(validationError);
   }
 
-  // Row format: Date, Subteam, Reason, $Amount
+  // Row format: Date, Subteam, Reason, $Amount, User
   const [subteam, reason, amount] = parsed;
-  const row = [formatSheetDate(), subteam, reason, amount];
+  const userName = body.user_name || 'unknown';
+  const row = [formatSheetDate(), subteam, reason, amount, userName];
 
   // Respond to Slack immediately to avoid slash command timeouts on cold starts.
   res
