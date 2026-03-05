@@ -163,6 +163,45 @@ App hosting runs on **apphost.ocf.berkeley.edu** and uses a **Unix socket**; the
 8. **Logs**  
    `journalctl --user -u myapp -f` to follow logs; `journalctl --user -u myapp -n 100` for the last 100 lines.
 
+### Option 1b: OCF standard web hosting (FastCGI, no app hosting)
+
+Use this if you have a normal OCF account and **don’t** have app hosting. The app runs as a FastCGI script in your `public_html` (Apache with mod_fcgid). Your URL will be `https://www.ocf.berkeley.edu/~username/...` or `https://ocf.io/username/...`.
+
+1. **SSH to OCF** (normal login server is fine):
+   ```bash
+   ssh ssh.ocf.berkeley.edu
+   ```
+
+2. **Install Node** (e.g. via nvm in your home directory) and clone the project:
+   ```bash
+   mkdir -p ~/myapp
+   cd ~/myapp
+   git clone https://github.com/YOUR_USERNAME/FEB_Slack_Bot.git .
+   npm install
+   npm run build
+   ```
+
+3. **Create `~/myapp/.env`** with the same variables as in “Environment variables” above (no `PORT` needed).
+
+4. **Create the FastCGI script in `public_html`** (run `makehttp` first if you don’t have `public_html`):
+   ```bash
+   cp ~/myapp/scripts/ocf-fcgi-wrapper.sh ~/public_html/purchase.fcgi
+   chmod +x ~/public_html/purchase.fcgi
+   ```
+   If OCF uses a different path for Node, replace `/usr/bin/env node` in the wrapper with the full path (e.g. from `which node` after loading nvm).
+
+5. **Point Slack at your URL**  
+   In Slack app → Slash Commands → set **Request URL** to:
+   - `https://www.ocf.berkeley.edu/~YOUR_OCF_USERNAME/purchase.fcgi`  
+   or  
+   - `https://ocf.io/YOUR_OCF_USERNAME/purchase.fcgi`  
+   Use your real OCF username.
+
+6. **Test**  
+   In Slack, run your slash command (e.g. `/reimburse Test, Reason, $1`). If it fails, check Apache error logs (OCF doc: `var/log/apache2/vhost_error.log` on the server they mention).
+
+Note: OCF’s supported Node version on the web server may be Node 12. If the built app fails, you may need to use the app hosting option (Option 1) instead.
+
 ### Option 2: Render (Free tier available)
 
 1. **Create a Render account**

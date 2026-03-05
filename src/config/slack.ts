@@ -17,6 +17,35 @@ export interface SlackSlashCommandBody {
 
 const version = 'v0';
 
+/** Standalone verification for use outside Express (e.g. FastCGI). Returns error info or null if valid. */
+export function verifySlackRequest(
+  rawBody: string,
+  timestamp: string | undefined,
+  signature: string | undefined
+): { status: number; body: object } | null {
+  const signingSecret = process.env.SLACK_SIGNING_SECRET;
+  if (!signingSecret) return null;
+
+  if (!timestamp || !signature) {
+    return { status: 400, body: { error: 'Missing Slack signature headers.' } };
+  }
+  const fiveMinutes = 60 * 5;
+  const currentTs = Math.floor(Date.now() / 1000);
+  if (Math.abs(currentTs - Number(timestamp)) > fiveMinutes) {
+    return { status: 400, body: { error: 'Stale Slack request.' } };
+  }
+  const basestring = `${version}:${timestamp}:${rawBody}`;
+  const hmac = crypto.createHmac('sha256', signingSecret);
+  hmac.update(basestring);
+  const computed = `${version}=${hmac.digest('hex')}`;
+  if (
+    !crypto.timingSafeEqual(Buffer.from(computed, 'utf8'), Buffer.from(signature, 'utf8'))
+  ) {
+    return { status: 401, body: { error: 'Invalid Slack signature.' } };
+  }
+  return null;
+}
+
 export const verifySlackSignature = (req: Request, res: Response, next: NextFunction) => {
   const signingSecret = process.env.SLACK_SIGNING_SECRET;
   if (!signingSecret) {
