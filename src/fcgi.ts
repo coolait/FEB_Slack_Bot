@@ -39,6 +39,11 @@ function parseFormBody(raw: string): Record<string, string> {
 }
 
 const server = fcgi.createServer((req: import('http').IncomingMessage, res: import('http').ServerResponse) => {
+  if (req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Slack purchase logger is running. Use POST from Slack slash command.');
+    return;
+  }
   if (req.method !== 'POST') {
     res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Method Not Allowed' }));
@@ -84,9 +89,6 @@ const server = fcgi.createServer((req: import('http').IncomingMessage, res: impo
   });
 });
 
-if (fcgi.isService()) {
-  server.listen(() => console.log('[fcgi] Listening on stdin'));
-} else {
-  console.error('Run this script as a FastCGI service (e.g. from Apache mod_fcgid).');
-  process.exit(1);
-}
+// Always try to listen on stdin (fd 0). Apache/mod_fcgid passes the FastCGI socket there.
+// Skipping the isService() check so we don't exit(1) when Apache runs us.
+server.listen(() => console.log('[fcgi] Listening on stdin'));
