@@ -1,6 +1,11 @@
 # Slack Purchase Logger (/purchase)
 
-Logs `/purchase` slash command submissions into a Google Sheet (`slack_budget`) using Node.js, TypeScript, Express, Slack signing verification, and Google Sheets API v4 with a Service Account.
+Logs `/purchase` (or `/reimburse`) slash command submissions into a Google Sheet: **Date, Subteam, Reason, $Amount, User**.
+
+Two backends:
+
+- **Python (Flask)** — single-file app in `python/`. **Use this for OCF** (Berkeley); see `python/README.md`.
+- **Node.js (Express)** — in `src/`. Use for Render, Railway, or local dev.
 
 ## What it does
 - Exposes `POST /api/purchase` for Slack slash command payloads.
@@ -102,9 +107,13 @@ Expected response JSON: `{"response_type":"ephemeral","text":"Purchase logged su
 
 ## Deploy: Hosting Your Application
 
-You need to host your server on the internet so Slack can send POST requests to it. Here are detailed steps for popular hosting platforms:
+You need to host your server on the internet so Slack can send POST requests to it.
 
-### Option 1: OCF (UC Berkeley – free for student groups)
+### OCF (Berkeley) — use the Python backend
+
+Use the **Python/Flask** app in the `python/` folder; OCF supports Flask. See **[python/README.md](python/README.md)** for setup (virtualenv, `.env`, gunicorn, and OCF app hosting or standard hosting).
+
+### Option 1: OCF with Node (app hosting only)
 
 App hosting runs on **apphost.ocf.berkeley.edu** and uses a **Unix socket**; the app is supervised with systemd. You need an OCF group account and app hosting enabled (email `hostmaster@ocf.berkeley.edu` if needed).
 
