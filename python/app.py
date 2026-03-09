@@ -7,7 +7,7 @@ import hmac
 import hashlib
 import time
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 from flask import Flask, request, jsonify
 
 # Google Sheets
@@ -78,7 +78,7 @@ VALIDATION_MSG = slack_ephemeral(
 )
 
 
-def parse_text(text: str | None) -> list[str] | None:
+def parse_text(text: Optional[str]) -> Optional[List[str]]:
     if not text:
         return None
     parts = [p.strip() for p in text.split(',') if p.strip()]
