@@ -7,6 +7,7 @@ import hmac
 import hashlib
 import time
 from datetime import date
+from typing import Optional
 from flask import Flask, request, jsonify
 
 # Google Sheets
@@ -46,7 +47,7 @@ def append_row(values):
 
 
 # --- Slack verification ---
-def verify_slack_request(raw_body: bytes, timestamp: str, signature: str) -> str | None:
+def verify_slack_request(raw_body: bytes, timestamp: str, signature: str) -> Optional[str]:
     """Returns error message or None if valid."""
     secret = os.environ.get('SLACK_SIGNING_SECRET')
     if not secret:
